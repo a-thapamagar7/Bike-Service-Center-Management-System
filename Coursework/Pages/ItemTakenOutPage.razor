@@ -1,0 +1,53 @@
+﻿@page "/itemtakenout"
+@using Coursework.Data
+@using Coursework.Data.Model;
+@using System.Text.Json
+@inject NavigationManager NavManager
+
+<h4>Approved Items</h4>
+
+<p>This component contains information of the month of <input type="text" @bind="month" /></p>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Quantity</th>
+			<th>Approved By</th>
+			<th>Taken By</th>
+			<th>Date Taken Out</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var currentItem in requestItemList)
+		{
+			@if ((currentItem.RequestStatus == "Approved") && (currentItem.DateHandled.ToString("MMMM").ToUpper() == month.ToUpper() || month.ToUpper() == "All".ToUpper()))
+			{
+				<tr>
+					<td>@currentItem.Name</td>
+					<td>@currentItem.Quantity</td>
+					<td>@currentItem.Handler</td>
+					<td>@currentItem.Requested_By</td>
+					<td>@currentItem.DateHandled.ToLongDateString()</td>
+				</tr>
+			}
+		}
+	</tbody>
+</table>
+
+
+@code {
+	private List<AvailableItems> itemList;
+	private List<ItemRequest> requestItemList;
+	private string month = "All";
+	private int requested_Qty;
+
+	protected override async Task OnInitializedAsync()
+	{
+		itemList = Helper.GetAllAvailableItems();
+		requestItemList = Helper.GetAllItemRequest();
+	}
+
+
+}

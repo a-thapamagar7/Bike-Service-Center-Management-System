@@ -1,0 +1,113 @@
+﻿
+@page "/users"
+@using Coursework.Data
+@using Coursework.Data.Model;
+@using System.Text.Json
+@inject NavigationManager NavManager
+
+<h4>Users</h4>
+
+<p>This component contains information of all the users</p>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>First Name</th>
+			<th>Last Name</th>
+			<th>Email</th>
+			<th>Role</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var admin in adminList)
+		{
+			<tr>
+				<td>@admin.firstName</td>
+				<td>@admin.lastName</td>
+				<td>@admin.email</td>
+				<td>
+					@admin.Role
+					<span class="">
+						<button @onclick="()=>{RemoveItem(admin.email);}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+								<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+								<path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+							</svg>
+						</button>
+					</span>
+				</td>
+			</tr>
+		}
+		@foreach (var staff in staffList)
+		{
+			<tr>
+				<td>@staff.firstName</td>
+				<td>@staff.lastName</td>
+				<td>@staff.email</td>
+				<td>
+					@staff.Role 
+					<span class="">
+						<button @onclick="()=>{RemoveItem(staff.email);}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+								<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+								<path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
+							</svg>
+						</button>
+					</span>
+				</td>
+			</tr>
+		}
+		
+	</tbody>
+</table>
+<button @onclick="Navigate">Register</button>
+
+@code {
+	private List<AdminInfo> adminList;
+	private List<StaffInfo> staffList;
+	private string validity;
+
+	protected override async Task OnInitializedAsync()
+	{
+		adminList = Helper.GetAllAdmin();
+		staffList = Helper.GetAll();
+	}
+
+	private void RemoveItemAdmin(string item)
+	{
+		if (adminList.Count > 1)
+		{
+			for (int i = 0; i < adminList.Count; i++)
+			{
+				if (adminList[i].email == item)
+				{
+					adminList.RemoveAt(i);
+				}
+			}
+			Helper.WriteToFile("AdminInfo.json", adminList);
+		}
+		else
+		{
+			validity = "There has to be one admin in the system";
+		}
+	}
+
+	private void RemoveItem(string item)
+	{
+		for (int i = 0; i < staffList.Count; i++)
+		{
+			if (staffList[i].email == item)
+			{
+				staffList.RemoveAt(i);
+			}
+		}
+		Helper.WriteToFile("StaffInfo.json", staffList);
+	}
+
+	private void Navigate()
+	{
+		NavManager.NavigateTo("/register");
+	}
+
+}

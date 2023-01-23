@@ -1,0 +1,89 @@
+﻿@page "/additems"
+@using Coursework.Data
+@using Coursework.Data.Model
+@using System.Text.Json
+@inject NavigationManager NavManager
+
+<h4>Add item</h4>
+
+
+<form>
+	<input type="text" placeholder="Item Name" @bind="a_itemName" /><br>
+	<input type="number" placeholder="Quantity" @bind="a_quantity" /><br>
+	<button class="w-10 btn btn-sm btn-primary" @onclick="AddMoreItems">Add item</button>
+	<button class="w-10 btn btn-sm btn-primary"@onclick="Reduce">Reduce Qty</button>
+</form>
+<h5>@validity</h5>
+<button @onclick="Navigate">Back</button>
+
+@code {
+	private string a_itemName;
+	private int a_quantity;
+	private string validity;
+
+	private void Reduce()
+	{
+		validity = "";
+		if (a_itemName == null || a_quantity == null)
+		{
+			validity = "Please enter all the fields. ";
+		}
+		if (a_quantity < 1)
+		{
+			validity = "The quantity must be greater than 0";
+		}
+		if (validity == "")
+		{
+			string filepath = @"D:\source\repos\Coursework\Coursework\Resources\ItemDetails\AvailableItems.json";
+			var itemList = Helper.GetAllAvailableItems();
+			var itemFound = itemList.FirstOrDefault(x => x.ItemName.ToUpper() == a_itemName.ToUpper());
+			if (itemFound != null)
+			{
+				itemList.Where(x => x.ItemName.ToUpper() == a_itemName.ToUpper()).ToList().ForEach(x => x.QuantityAvailable -= a_quantity);
+			}
+			else
+			{
+				validity = "This item does not exist";
+			}
+			Helper.WriteToFile("AvailableItems.json", itemList);
+		}
+	}
+
+	private void AddMoreItems()
+	{
+		validity = "";
+		if (a_itemName == null || a_quantity == null)
+		{
+			validity = "Please enter all the fields. ";
+		}
+		if (a_quantity < 1)
+		{
+			validity = "The quantity must be greater than 0";
+		}
+		if (validity == "")
+		{
+			string filepath = @"D:\source\repos\Coursework\Coursework\Resources\ItemDetails\AvailableItems.json";
+			var itemList = Helper.GetAllAvailableItems();
+			var itemFound = itemList.FirstOrDefault(x => x.ItemName.ToUpper() == a_itemName.ToUpper());
+			if (itemFound != null)
+			{
+				itemList.Where(x => x.ItemName.ToUpper() == a_itemName.ToUpper()).ToList().ForEach(x => x.QuantityAvailable += a_quantity);
+			}
+			else
+			{
+				itemList.AddRange(new List<AvailableItems>
+				{
+					new AvailableItems() {ItemName=a_itemName, QuantityAvailable=a_quantity}
+				});
+			}
+			Helper.WriteToFile("AvailableItems.json", itemList);
+			validity = "This item does not exist";
+		}
+	}
+
+
+	private void Navigate()
+	{
+		NavManager.NavigateTo("itemsavailable");
+	}
+}

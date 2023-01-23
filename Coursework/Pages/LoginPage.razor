@@ -1,0 +1,150 @@
+﻿@page "/"
+@inherits LayoutComponentBase
+@using Coursework.Data
+@using System.Text.Json
+@using Coursework.Data.Model
+@inject NavigationManager NavManager
+
+@*@using ToDoListApp.Data.Model;
+@using ToDoListApp.Data;
+@inject EmployeeService EmployeeService;
+*@
+<div class="container">
+	<div class="login-body">
+		<div class="form-login">
+			<form class="text-center" @onsubmit="VerifyDetails">
+				<img class="mb-4" src="/appicon.png" alt="" height="72">
+				<h1 class="h3 mb-3 fw-normal">Please Login</h1>
+				<div class="form-floating">
+					<input type="text" class="form-control username" @bind="al_email" placeholder="Email" />
+					<label for="floatingInput">Email</label>
+				</div>
+				<div class="form-floating">
+					<input type="password" class="form-control password" @bind="al_password" placeholder="Password" />
+					<label for="floatingPassword">Password</label>
+				</div>
+				<select name="month" @bind="role" class="whh">
+					<option value="">Select</option>
+					<option value="Admin">Admin</option>
+					<option value="Staff">Staff</option>
+				</select>
+				<button class="w-100 btn btn-lg btn-primary" type="submit">
+					<span class="oi oi-account-login"></span> Login
+				</button>
+			</form>
+		</div>
+		<h5 class="fd text-danger">@validity</h5>
+	</div>
+</div>
+
+
+@*<div class="back">
+	<h1>Login</h1>
+	<form @onsubmit="VerifyDetails">
+		<input type="text" placeholder="Email" @bind="al_email" /><br>
+		<input type="password" placeholder="Password" @bind="al_password" /><br>
+		<select name="month" @bind="role">
+			<option value="">Select</option>
+			<option value="Admin">Admin</option>
+			<option value="Staff">Staff</option>
+		</select><br>
+		<button class="w-10 btn btn-sm btn-primary" type="submit">Submit</button>
+	</form>
+	<h5 class="text-danger">@validity</h5>
+</div>*@
+
+
+
+
+@code {
+	private string al_email;
+	private string al_password;
+	private string validity;
+	private string role;
+
+	private void VerifyDetails()
+	{
+		validity = "";
+		if (al_email == null || al_password == null)
+		{
+			validity = "Please enter all the fields. ";
+			return;
+		}
+		if (role == "Admin")
+		{
+			VerifyAdmin();
+		}
+		else if (role == "Staff")
+		{
+			VerifyStaff();
+		}
+		else 
+		{
+			validity = "Please enter right role";
+		}
+	}
+
+	private void VerifyAdmin()
+	{
+		if (al_email == null || al_password == null)
+		{
+			validity = "Please enter all the fields. ";
+			return;
+		}
+		string hashedPassword = Helper.ConvertHash(al_password, "");
+		var json = Helper.ReadFromFile<List<AdminInfo>>(fileName: "AdminInfo.json");
+		AdminInfo account = json.FirstOrDefault(x => x.email == al_email);
+		if (account == null)
+		{
+			validity = "Your email does not exist.";
+		}
+		else
+		{
+			if (account.password == hashedPassword)
+			{
+				GlobalState.firstName = account.firstName;
+				GlobalState.lastName = account.lastName;
+				GlobalState.email = account.email;
+				GlobalState.Role = account.Role;
+				NavManager.NavigateTo("/itemsavailable");
+			}
+			else
+			{
+				validity = "The password is incorrect.";
+			}
+
+		}
+
+	}
+	private void VerifyStaff()
+	{
+
+		if (al_email == null || al_password == null)
+		{
+			validity = "Please enter all the fields. ";
+			return;
+		}
+		string hashedPassword = Helper.ConvertHash(al_password, "");
+		var json = Helper.ReadFromFile<List<StaffInfo>>(fileName: "StaffInfo.json");
+		StaffInfo account = json.FirstOrDefault(x => x.email == al_email);
+		if (account == null)
+		{
+			validity = "Your email does not exist.";
+		}
+		else
+		{
+			if (account.password == hashedPassword)
+			{
+				GlobalState.firstName = account.firstName;
+				GlobalState.lastName = account.lastName;
+				GlobalState.email = account.email;
+				GlobalState.Role = account.Role;
+				NavManager.NavigateTo("/requestItems");
+			}
+			else
+			{
+				validity = "The password is incorrect.";
+			}
+		}
+	}
+}

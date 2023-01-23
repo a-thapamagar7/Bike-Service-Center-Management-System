@@ -1,0 +1,66 @@
+﻿@page "/barchart"
+@using Coursework.Data.Model
+@using Coursework.Data
+@using System.Text.Json;
+@using System.Text.Json.Serialization;
+@using ChartJs.Blazor.BarChart;
+
+<h1>Bar graph</h1>
+
+<ChartJs.Blazor.Chart Config="_barConfig"></ChartJs.Blazor.Chart>
+
+@code {
+    private List<ItemRequest> RequestItemList;
+    private BarConfig _barConfig;
+
+    protected override void OnInitialized()
+    {
+        RequestItemList = Helper.ReadFromFile<List<ItemRequest>>(fileName: "ItemRequests.json"); ;
+        ConfigureBarConfig();
+    }
+
+    private string[] ItemLabelUnique(List<ItemRequest> requestItems)
+    {
+        HashSet<string> itemLabelsUnique = new HashSet<string>();
+
+        foreach (ItemRequest requestItem in requestItems)
+        {
+            itemLabelsUnique.Add(requestItem.Name);
+        }
+        return itemLabelsUnique.ToArray();
+    }
+
+    private void ConfigureBarConfig()
+    {
+        _barConfig = new BarConfig();
+
+        _barConfig.Options = new BarOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Transaction of Approved Items",
+                },
+            };
+
+        foreach (var label in ItemLabelUnique(RequestItemList))
+        {
+            _barConfig.Data.Labels.Add(label);
+        }
+
+        BarDataset<int> dataset = new BarDataset<int>();
+        dataset.Label = "Quantity of Items Taken Out";
+
+
+        var items = RequestItemList.Where(x => x.RequestStatus == "Approved").GroupBy(log => log.Name).Select(i => new { Item = i.Key, QuantityTaken = i.Sum(log => log.Quantity) });
+
+        foreach (var item in items)
+        {
+            dataset.Add(item.QuantityTaken);
+        }
+
+        dataset.BackgroundColor = "#082c6c";
+        _barConfig.Data.Datasets.Add(dataset);
+    }
+}

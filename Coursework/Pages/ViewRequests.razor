@@ -1,0 +1,117 @@
+﻿@page "/viewrequests"
+@using Coursework.Data
+@using Coursework.Data.Model;
+@using System.Text.Json
+@inject NavigationManager NavManager
+
+<h4>Item Requests</h4>
+
+<p>This component contains information of the month of <input type="text" @bind="month"/></p>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Requested Quantity</th>
+			<th>Date</th>
+			<th>Requested By</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var currentItem in requestItemList)
+		{
+			@if (currentItem.RequestStatus == null && (currentItem.Requested_Date.ToString("MMMM").ToUpper() == month.ToUpper() || month.ToUpper() == "All".ToUpper()))
+			{
+				<tr>
+					<td>@currentItem.Name</td>
+					<td>@currentItem.Quantity</td>
+					<td>@currentItem.Requested_Date.ToLongDateString()</td>
+					<td>@currentItem.Requested_By</td>
+					<td>
+						<button class="btn btn-outline-success oi oi-check" @onclick="() => {Accept(currentItem.Name, currentItem.Id);}">
+							 Accept
+						</button>
+						<button class="btn btn-outline-danger oi oi-x " @onclick="() => {Reject(currentItem.Name, currentItem.Id);}"> Reject</button>
+					</td>
+				</tr>
+			}
+		} 
+	</tbody>
+</table>
+<h6 class="text-danger">@validity</h6>
+
+
+@code {
+	private List<AvailableItems> itemList;
+	private List<ItemRequest> requestItemList;
+	private List<ItemRequest> selectedList;
+	private string month = "All";
+
+	private string validity;
+	private int requested_Qty;
+
+	protected override async Task OnInitializedAsync()
+	{
+		itemList = Helper.GetAllAvailableItems();
+		try
+		{
+			requestItemList = Helper.GetAllItemRequest();
+
+		}
+		catch (Exception ex)
+		{
+			validity = "The stored file does not exist";
+		}
+	}
+
+	private void Accept(string name, Guid id) 
+	{
+		if (DateTime.Now.DayOfWeek >= DayOfWeek.Monday && DateTime.Now.DayOfWeek <= DayOfWeek.Friday && DateTime.Now.Hour >= 9 && DateTime.Now.Hour < 16)
+		{
+			var requestedItem = requestItemList.FirstOrDefault(x => x.Id == id);
+			var availableItem = itemList.FirstOrDefault(x => x.ItemName == name);
+			//checks if the quantity is sufficient for that request
+			if (requestedItem.Quantity > availableItem.QuantityAvailable)
+			{
+				validity = "The quantity is not sufficient for that request";
+			}
+			else
+			{
+				//reduces the number of items requested from the inventory
+				itemList.Where(x => x.ItemName.ToUpper() == name.ToUpper()).ToList().ForEach(x => x.QuantityAvailable -= requestedItem.Quantity);
+				itemList.Where(x => x.ItemName.ToUpper() == name.ToUpper()).ToList().ForEach(x => x.LastTaken = DateTime.Now);
+				requestItemList.Where(x => x.Id == id).ToList().ForEach(x => x.RequestStatus = "Approved");
+				requestItemList.Where(x => x.Id == id).ToList().ForEach(x => x.Handler = GlobalState.email);
+				requestItemList.Where(x => x.Id == id).ToList().ForEach(x => x.DateHandled = DateTime.Now);
+				Helper.WriteToFile("AvailableItems.json", itemList);
+				Save();
+			}
+		}
+		else
+		{
+			validity = "The items can be approved only between 9am to 4pm and 5 days a week(Monday to Friday)";
+		}
+	}
+
+	private void Reject(string name, Guid id)
+	{
+		if (DateTime.Now.DayOfWeek >= DayOfWeek.Monday && DateTime.Now.DayOfWeek <= DayOfWeek.Friday && DateTime.Now.Hour >= 9 && DateTime.Now.Hour < 16)
+		{
+			requestItemList.Where(x => x.Id == id).ToList().ForEach(x => x.RequestStatus = "Denied");
+			requestItemList.Where(x => x.Id == id).ToList().ForEach(x => x.Handler = GlobalState.email);
+			requestItemList.Where(x => x.Id == id).ToList().ForEach(x => x.DateHandled = DateTime.Now);
+			Save();
+		}
+		else
+		{
+			validity = "The items can be approved only between 9am to 4pm and 5 days a week(Monday to Friday)";
+		}
+	}
+
+	private void Save()
+	{
+		Helper.WriteToFile("ItemRequests.json", requestItemList);
+	}
+
+}

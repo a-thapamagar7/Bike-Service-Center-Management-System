@@ -1,0 +1,71 @@
+﻿@page "/myrequests"
+@using Coursework.Data
+@using Coursework.Data.Model;
+@using System.Text.Json
+@inject NavigationManager NavManager
+
+<h2>My Requests</h2>
+
+<p>This component contains information of all @GlobalState.firstName @GlobalState.lastName</p>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Quantity</th>
+			<th>Requested Date</th>
+			<th>Status</th>
+		</tr>
+	</thead>
+	<tbody>
+		
+		@foreach (var currentItem in requestItemList)
+		{
+			@if (currentItem.Requested_By == GlobalState.email && currentItem.RequestStatus == "Approved")
+			{
+				<tr>
+					<td>@currentItem.Name</td>
+					<td>@currentItem.Quantity</td>
+					<td>@currentItem.Requested_Date</td>
+					<td class="text-success">@currentItem.RequestStatus</td>
+				</tr>
+			}
+		}
+		@foreach (var currentItem in requestItemList)
+		{
+			@if (currentItem.Requested_By == GlobalState.email && currentItem.RequestStatus == "Denied")
+			{
+				<tr>
+					<td>@currentItem.Name</td>
+					<td>@currentItem.Quantity</td>
+					<td>@currentItem.Requested_Date</td>
+					<td class="text-danger">@currentItem.RequestStatus</td>
+				</tr>
+			}
+		}
+		@foreach (var currentItem in requestItemList)
+		{
+			@if (currentItem.Requested_By == GlobalState.email && currentItem.RequestStatus == null)
+			{
+				<tr>
+					<td>@currentItem.Name</td>
+					<td>@currentItem.Quantity</td>
+					<td>@currentItem.Requested_Date</td>
+					<td>@currentItem.RequestStatus</td>
+				</tr>
+			}
+		}
+		
+	</tbody>
+</table>
+
+@code {
+	private List<ItemRequest> requestItemList;
+
+	protected override async Task OnInitializedAsync()
+	{
+		requestItemList = Helper.GetAllItemRequest();
+
+	}
+
+}

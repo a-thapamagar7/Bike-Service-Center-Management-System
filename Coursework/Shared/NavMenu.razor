@@ -1,0 +1,84 @@
+﻿@using Coursework.Data.Model
+@inject NavigationManager NavManager
+<div class="top-row ps-3 navbar navbar-dark">
+	<div class="container-fluid">
+		<a class="navbar-brand" href=""><span class="oi oi-person"></span> @GlobalState.firstName @GlobalState.lastName</a>
+		<button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+	</div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+	<nav class="flex-column">
+		@*For only Admin*@
+		@if (GlobalState.Role == "Admin") 
+		{
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="itemsavailable">
+					<span class="oi oi-box" aria-hidden="true"></span> Inventory
+				</NavLink>
+			</div>
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="users">
+					<span class="oi oi-people" aria-hidden="true"></span> Users
+				</NavLink>
+			</div>
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="viewrequests">
+					<span class="oi oi-list-rich" aria-hidden="true"></span> Requests
+				</NavLink>
+			</div>
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="barchart">
+					<span class="oi oi-list-rich" aria-hidden="true"></span> BarChart
+				</NavLink>
+			</div>
+		}
+		@*For only staff*@
+		@if (GlobalState.Role == "Staff") 
+		{
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="requestItems">
+					<span class="oi oi-clock" aria-hidden="true"></span> Request Items
+				</NavLink>
+			</div>
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="myrequests">
+					<span class="oi oi-clock" aria-hidden="true"></span> My Requests
+				</NavLink>
+			</div>
+		}
+		<div class="nav-item px-3">
+			<NavLink class="nav-link" href="itemtakenout">
+				<span class="oi oi-circle-check" aria-hidden="true"></span> Approved items
+			</NavLink>
+		</div>
+		<div class="nav-item px-3">
+			<button class="bg-transparent text-white border-0" @onclick="LogoutUser">
+				<span class="oi oi-account-logout" aria-hidden="true"></span> Logout
+			</button>
+		</div>
+
+	</nav>
+</div>
+
+@code {
+	private bool collapseNavMenu = true;
+
+	private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+	private void ToggleNavMenu()
+	{
+		collapseNavMenu = !collapseNavMenu;
+	}
+
+	private void LogoutUser()
+	{
+		NavManager.NavigateTo("/");
+		GlobalState.firstName = null;
+		GlobalState.lastName = null;
+		GlobalState.email = null;
+		GlobalState.Role = null;
+	}
+}

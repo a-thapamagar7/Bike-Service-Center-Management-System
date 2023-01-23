@@ -1,0 +1,121 @@
+﻿@page "/register"
+@using Coursework.Data
+@using Coursework.Data.Model
+@using System.Text.Json
+@inject NavigationManager NavManager
+
+@*@using ToDoListApp.Data.Model;
+@using ToDoListApp.Data;
+@inject EmployeeService EmployeeService;
+*@
+<h4>Register</h4>
+
+
+<form @onsubmit="SaveDetails">
+	<input type="text" placeholder="First Name" @bind="s_firstName"/>
+	<input type="text" placeholder="Last Name" @bind="s_lastName" /><br>
+	<input type="text" placeholder="Email" @bind="s_email" /><br>
+	<input type="password" placeholder="Password"  @bind="s_password"/>
+	<input type="password" placeholder="Password" @bind="s_repassword" /><br>
+	<select name="month" @bind="role" class="whh">
+		<option value="">Select</option>
+		<option value="Admin">Admin</option>
+		<option value="Staff">Staff</option>
+	</select><br>
+	<button class="w-10 btn btn-sm btn-primary"  type="submit">Submit</button>
+	<button class="w-10 btn btn-sm btn-primary" @onclick="Navigate">Back</button>
+</form>
+<h5 class="text-danger">@validity</h5>
+
+@code {
+	//private List<EmployeeModel> employeeModels;
+	//private string _searchInput;
+	//private string _hashData;
+	private string s_firstName;
+	private string s_lastName;
+	private string s_email;
+	private string s_password;
+	private string s_repassword;
+	private string validity;
+	private string role;
+
+
+	//protected override async Task OnInitializedAsync()
+	//{
+	//	employeeModels = EmployeeService.EmployeeDetails();
+	//}
+
+	private void SaveDetails()
+	{
+		validity = "";
+		if (s_firstName == null || s_lastName == null || s_email == null || s_password == null) 
+		{
+			validity = "Please enter all the fields. ";
+		}
+		else if (s_password.Length < 8)
+		{
+			validity = "The password length must be atleast 8 characters";
+		}
+		else if (s_password != s_repassword)
+		{
+			validity = "The passwords do not match";
+		}
+		if (validity == "")
+		{
+			if (role == "Admin")
+			{
+				SaveAdmin();
+			}
+			else if (role == "Staff")
+			{
+				SaveStaff();
+			}
+		}
+	}
+
+	private void SaveAdmin()
+	{
+		string hashedPassword = Helper.ConvertHash(s_password, "");
+		var registerList = Helper.GetAllAdmin();
+		if (registerList.Count < 2)
+		{
+			var sameEmail = registerList.FirstOrDefault(x => x.email == s_email);
+			if (sameEmail != null) validity = "Same email exists. Please try with new email";
+			else
+			{
+				registerList.AddRange(new List<AdminInfo>
+			{
+				new AdminInfo() {firstName=s_firstName, lastName=s_lastName, email = s_email, password = hashedPassword, Role = "Admin"},
+			});
+				Helper.WriteToFile("AdminInfo.json", registerList);
+				validity = "Admin Added";
+			}
+		}
+		else 
+		{
+			validity = "The number of admin can only be 2";
+		}
+	}
+
+	private void SaveStaff()
+	{
+		string hashedPassword = Helper.ConvertHash(s_password, "");
+		var registerList = Helper.GetAll();
+		var sameEmail = registerList.FirstOrDefault(x => x.email == s_email);
+		if (sameEmail != null) validity = "Same email exists. Please try with new email";
+		else
+		{
+			registerList.AddRange(new List<StaffInfo>
+			{
+				new StaffInfo() {firstName=s_firstName, lastName=s_lastName, email = s_email, password = hashedPassword, Role = "Staff"},
+			});
+			Helper.WriteToFile("StaffInfo.json", registerList);
+			validity = "Staff Added";
+		}
+	}
+
+	private void Navigate()
+	{
+		NavManager.NavigateTo("/users");
+	}
+}

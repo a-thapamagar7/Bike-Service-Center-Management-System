@@ -1,0 +1,87 @@
+﻿@page "/requestItems"
+@using Coursework.Data
+@using Coursework.Data.Model;
+@using System.Text.Json
+@inject NavigationManager NavManager
+
+<h4>Available Items</h4>
+
+<p>This component contains information of all the available items</p>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Item</th>
+			<th>Quantity in Inventory</th>
+			<th>Requested Quantity</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var currentItem in itemList)
+		{
+			<tr>
+				<td>@currentItem.ItemName</td>
+				<td>@currentItem.QuantityAvailable</td>
+				<td><input type="number" @bind="requested_Qty" /></td>
+				<td>
+					<button @onclick="() => {RequestItems(currentItem.ItemName);}">Request</button>
+				</td>
+			</tr>
+		}
+	</tbody>
+</table>
+<h6 class="text-success">@validity</h6>
+
+@code {
+	private List<AvailableItems> itemList;
+	private List<ItemRequest> requestItemList;
+
+	private string validity;
+	private int requested_Qty;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			itemList = Helper.GetAllAvailableItems();
+			requestItemList = Helper.GetAllItemRequest();
+		}
+		catch (Exception ex)
+		{
+			validity = "The stored file does not exist";
+		}
+
+	}
+
+	private void RequestItems(string item )
+	{
+		var itemAvailable = itemList.FirstOrDefault(x => x.ItemName == item);
+		if (itemAvailable.QuantityAvailable >= requested_Qty && requested_Qty > 0)
+		{
+			string filepath = @"D:\source\repos\Coursework\Coursework\Resources\ItemDetails\ItemRequests.json";
+			var sameItem = requestItemList.FirstOrDefault(x => x.Name == item && x.Requested_By == GlobalState.email && x.RequestStatus == null);
+			if (sameItem != null)
+			{
+				requestItemList.Where(x => x.Name.ToUpper() == item.ToUpper()).ToList().ForEach(x => x.Quantity += requested_Qty);
+				requestItemList.Where(x => x.Name.ToUpper() == item.ToUpper()).ToList().ForEach(x => x.Requested_Date = DateTime.Now);
+			}
+			else
+			{
+				requestItemList.AddRange(new List<ItemRequest>
+				{
+					new ItemRequest() {Name=item, Quantity=requested_Qty, Requested_By = GlobalState.email, Requested_Date = DateTime.Now},
+				});
+			}
+			Helper.WriteToFile("ItemRequests.json", requestItemList);
+			requested_Qty = 0;
+			validity = "Item Requested";
+		}
+		else
+		{
+			validity = "The quantity is not sufficient for your request";
+			requested_Qty = 0;
+		}
+	}
+
+}
